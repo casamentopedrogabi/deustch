@@ -19,6 +19,14 @@ MASTERY_STREAK = 3
 NEW_VERBS_PER_SESSION = 3
 REVIEW_VERBS_PER_SESSION = 3
 
+# --- Heineken Colors (para os gráficos) ---
+heineken_colors = {
+    "dark_green": "#286529",
+    "red": "#ca2819",
+    "lime_green": "#8ebf48",
+    "medium_gray": "#95a49b"
+}
+
 # --- Database Setup ---
 # Initialize Supabase connection. 
 # Ele vai ler as chaves do seu arquivo .streamlit/secrets.toml
@@ -568,14 +576,14 @@ def next_question():
     user_data = get_user_data()
     if not user_data: return
         
-    session = user_data["current_quiz_session"]
+    session = user_data.get("current_quiz_session") # Use .get() for safety
     
     # --- FIX: Check if the session is already over ---
     # This prevents a crash if the button is double-clicked
-    # or clicked after the quiz has ended.
     if not session:
         st.session_state.page = "results" # Ensure we are on results page
-        if 'rerun_requested' not in st.session_state:
+        # Use a flag to prevent multiple reruns
+        if not st.session_state.get('rerun_requested', False):
              st.session_state.rerun_requested = True
              st.rerun()
         return 
@@ -586,10 +594,11 @@ def next_question():
     if next_index < session["num_questions"]:
         session["current_q_index"] = next_index
         set_current_question(next_index)
+        st.session_state.rerun_requested = False # Reset flag
     else:
         end_quiz_session()
         # Rerun to go to results page
-        if 'rerun_requested' not in st.session_state:
+        if not st.session_state.get('rerun_requested', False):
              st.session_state.rerun_requested = True
              st.rerun()
 
@@ -1118,80 +1127,197 @@ def render_results_page():
     )
     # The quiz session is now cleared in end_quiz_session() before saving.
 
+# --- --------------------------------- ---
+# --- INÍCIO DA NOVA PÁGINA DE RELATÓRIO ---
+# --- --------------------------------- ---
+
 def render_report_page():
-    """Renders the new, detailed report page with tabs."""
+    """
+    Renders the new, single-page, mobile-friendly report page.
+    Replaces the old tabbed layout.
+    """
     user_data = get_user_data()
     if not user_data:
         st.error("Erro ao carregar dados do usuário.")
         return
 
     render_sidebar()
-    st.title("📊 Relatório de Desempenho")
+    st.title("📊 Meu Desempenho")
+    st.divider()
 
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Visão Global", 
-        "Histórico de Sessões", 
-        "Meus Top Erros",
-        "Desempenho por Pergunta"
+    # --- 1. Cálculos Iniciais ---
+    total_verbs = len(VERB_DATA)
+    learned_count = len(user_data["learned_pool_ids"])
+    learning_count = len(user_data["learning_pool_ids"])
+    unseen_count = len(user_data["unseen_verb_ids"])
+    stats = user_data["verb_stats"]
+    
+    # Cálculo de Maestria
+    maestria_percent = (learned_count / total_verbs) if total_verbs > 0 else 0
+    
+    # Cálculo de Erros Totais
+    total_prep_errors = sum(data.get("preposition_errors", 0) for data in stats.values())
+    total_trans_errors = sum(data.get("translation_errors", 0) for data in stats.values())
+    total_case_errors = sum(data.get("case_errors", 0) for data in stats.values())
+    total_errors = total_prep_errors + total_trans_errors + total_case_errors
+    
+    # Cálculo de Streak (copiado do render_home_page)
+    study_dates = set(entry["date"] for entry in user_data["daily_stats_history"])
+    today = date.today()
+    current_streak = 0
+    check_date = today
+    if today.strftime("%Y-%m-%d") not in study_dates:
+        check_date = today - timedelta(days=1)
+    while check_date.strftime("%Y-%m-%d") in study_dates:
+        current_streak += 1
+        check_date -= timedelta(days=1)
+
+    # --- 2. Seção de Nível Atual ---
+    st.subheader("🚀 Seu Nível Atual")
+    
+    st.progress(maestria_percent, text=f"Nível de Maestria: {maestria_percent:.0%}")
+
+    # Métricas principais
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Dias de Treino", f"{len(user_data['daily_stats_history'])}")
+    col2.metric("Sequência Atual", f"🔥 {current_streak} Dias")
+    col3.metric("Total de Erros", f"❌ {total_errors}")
+
+    # Gráfico de Donut (Visão Global)
+    chart_data = pd.DataFrame([
+        {"categoria": "Aprendidos", "valor": learned_count},
+        {"categoria": "Em Aprendizado", "valor": learning_count},
+        {"categoria": "Não Vistos", "valor": unseen_count},
     ])
+    
+    color_scale = alt.Scale(
+        domain=["Aprendidos", "Em Aprendizado", "Não Vistos"],
+        range=[heineken_colors["dark_green"], heineken_colors["lime_green"], heineken_colors["medium_gray"]]
+    )
+    
+    base = alt.Chart(chart_data).encode(
+        theta=alt.Theta("valor:Q", stack=True)
+    )
+    
+    donut = base.mark_arc(outerRadius=120, innerRadius=80).encode(
+        color=alt.Color("categoria:N", title="Categoria", scale=color_scale),
+        order=alt.Order("valor", sort="descending"),
+        tooltip=["categoria", "valor"]
+    )
+    
+    text = base.mark_text(radius=140).encode(
+        text=alt.Text("valor:Q"),
+        order=alt.Order("valor", sort="descending"),
+        color=alt.value("black")
+    )
+    
+    st.altair_chart(donut + text, use_container_width=True)
+    
+    st.divider()
 
-    with tab1:
-        st.subheader("Visão Global do Baralho")
+    # --- 3. Seção de Evolução ---
+    st.subheader("📈 Sua Evolução")
+    if not user_data["daily_stats_history"]:
+        st.info("Você precisa completar pelo menos uma sessão para ver sua evolução.")
+    else:
+        history_df = pd.DataFrame(user_data["daily_stats_history"])
+        history_df['Sessão #'] = range(1, len(history_df) + 1)
+        history_df["% Certo"] = history_df.apply(
+            lambda row: (row["correct"] / row["total"] * 100) if row["total"] > 0 else 0, 
+            axis=1
+        )
         
-        total_verbs = len(VERB_DATA)
-        learned_count = len(user_data["learned_pool_ids"])
-        learning_count = len(user_data["learning_pool_ids"])
-        unseen_count = len(user_data["unseen_verb_ids"])
+        base = alt.Chart(history_df).encode(
+            x=alt.X('Sessão #:Q', axis=alt.Axis(title='Sessão'))
+        ).properties(
+            title="Performance por Sessão"
+        )
         
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Verbos Aprendidos", f"{learned_count} / {total_verbs}")
-        col2.metric("Em Aprendizado", f"{learning_count}")
-        col3.metric("Não Vistos", f"{unseen_count}")
+        line = base.mark_line(color=heineken_colors["dark_green"], point=True).encode(
+            y=alt.Y('% Certo:Q', axis=alt.Axis(title='% Corretas'), scale=alt.Scale(domain=[0, 100])),
+            tooltip=['Sessão #', alt.Tooltip('% Certo', format='.0f'), 'Corretas', 'Erradas']
+        )
         
-        # Donut Chart
+        st.altair_chart(line.interactive(), use_container_width=True)
+        
+    st.divider()
+
+    # --- 4. Seção de Desafios ---
+    st.subheader("🎯 Seus Desafios")
+    st.caption("Onde você precisa focar para melhorar.")
+
+    # Gráfico de Top 5 Erros
+    error_verbs = []
+    for vid, data in stats.items():
+        if data["errors"] > 0:
+            verb = get_verb_by_id(vid)
+            if verb:
+                error_verbs.append({
+                    "Verbo": f"{verb['verb']} {verb['preposition']}",
+                    "Tradução": verb["translation"],
+                    "Erros": data["errors"]
+                })
+    
+    if error_verbs:
+        error_df = pd.DataFrame(error_verbs).sort_values(by="Erros", ascending=False).head(5)
+        
+        base = alt.Chart(error_df).encode(
+            y=alt.Y('Verbo:N', sort=None, title='Verbo'),
+            tooltip=['Verbo', 'Tradução', 'Erros']
+        ).properties(
+            title="Seus 5 Verbos Mais Difíceis"
+        )
+        
+        bars = base.mark_bar(color=heineken_colors["red"]).encode(
+            x=alt.X('Erros:Q', axis=alt.Axis(title='Total de Erros'))
+        )
+        
+        text = bars.mark_text(
+            align='left',
+            baseline='middle',
+            dx=3, # Desloca o texto 3 pixels à direita da barra
+            color='black'
+        ).encode(
+            text=alt.Text('Erros:Q')
+        )
+        
+        st.altair_chart(bars + text, use_container_width=True)
+
+    else:
+        st.info("Você ainda não errou nenhum verbo! 🎉")
+    
+    # Gráfico de Tipos de Erro
+    if total_errors > 0:
         chart_data = pd.DataFrame([
-            {"categoria": "Aprendidos", "valor": learned_count},
-            {"categoria": "Em Aprendizado", "valor": learning_count},
-            {"categoria": "Não Vistos", "valor": unseen_count},
+            {"Tipo": "Preposição", "Total de Erros": total_prep_errors},
+            {"Tipo": "Significado", "Total de Erros": total_trans_errors},
+            {"Tipo": "Caso (Akk/Dat)", "Total de Erros": total_case_errors},
         ])
         
-        # Heineken color mapping
-        heineken_colors= {"dark_green": "#286529", "lime_green": "#8ebf48", "medium_gray": "#95a49b"}
-        color_scale = alt.Scale(
-            domain=["Aprendidos", "Em Aprendizado", "Não Vistos"],
-            range=[heineken_colors["dark_green"], heineken_colors["lime_green"], heineken_colors["medium_gray"]]
+        bar_chart = alt.Chart(chart_data).mark_bar(color=heineken_colors["dark_green"]).encode(
+            x=alt.X("Tipo:N", sort=None, title=None),
+            y=alt.Y("Total de Erros:Q"),
+            tooltip=["Tipo", "Total de Erros"]
+        ).properties(
+            title="Total de Erros por Tipo de Pergunta"
         )
-        
-        base = alt.Chart(chart_data).encode(
-            theta=alt.Theta("valor:Q", stack=True)
-        )
-        
-        donut = base.mark_arc(outerRadius=120, innerRadius=80).encode(
-            color=alt.Color("categoria:N", title="Categoria", scale=color_scale),
-            order=alt.Order("valor", sort="descending"),
-            tooltip=["categoria", "valor"]
-        )
-        
-        text = base.mark_text(radius=140).encode(
-            text=alt.Text("valor:Q"),
-            order=alt.Order("valor", sort="descending"),
-            color=alt.value("black")
-        )
-        
-        st.altair_chart(donut + text, use_container_width=True)
+        st.altair_chart(bar_chart, use_container_width=True)
 
-    with tab2:
-        st.subheader("Histórico de Sessões")
-        
+    st.divider()
+
+    # --- 5. Seção de Histórico Detalhado (Expander) ---
+    st.subheader("📚 Histórico Completo de Sessões")
+    with st.expander("Clique para ver todos os seus treinos"):
         if not user_data["daily_stats_history"]:
-            st.info("Nenhum treino concluído ainda. Complete uma sessão!")
+            st.info("Nenhum treino concluído ainda.")
         else:
+            # Re-cria o history_df, mas desta vez com a coluna "Verbos Errados"
             history_df = pd.DataFrame(user_data["daily_stats_history"])
             history_df['Sessão #'] = range(1, len(history_df) + 1)
             history_df["% Certo"] = history_df.apply(
                 lambda row: (row["correct"] / row["total"] * 100) if row["total"] > 0 else 0, 
                 axis=1
-            )
+            ).map("{:.0f}%".format)
             
             def format_missed_verbs(id_list):
                 if not id_list or not isinstance(id_list, list):
@@ -1208,8 +1334,6 @@ def render_report_page():
             )
             history_df["Verbos Errados"] = history_df["missed_verbs"].apply(format_missed_verbs)
             
-            st.line_chart(history_df.set_index('Sessão #'), y="% Certo")
-            
             st.dataframe(
                 history_df.rename(columns={
                     "date": "Data", "correct": "Corretas", "wrong": "Erradas", "total": "Total"
@@ -1220,90 +1344,9 @@ def render_report_page():
                 hide_index=True
             )
 
-    with tab3:
-        st.subheader("Meus Top Erros (por Verbo)")
-        st.caption("Verbos que você errou. Eles aparecerão com mais frequência nos treinos.")
-        
-        stats = user_data["verb_stats"]
-        error_verbs = []
-        
-        for vid, data in stats.items():
-            if data["errors"] > 0:
-                verb = get_verb_by_id(vid)
-                if verb:
-                    error_verbs.append({
-                        "id": vid, 
-                        "Verbo": f"{verb['verb']} {verb['preposition']}",
-                        "Tradução": verb["translation"],
-                        "Erros": data["errors"],
-                        "Acertos Seguidos": data["streak"]
-                    })
-        
-        if error_verbs:
-            error_df = pd.DataFrame(error_verbs).sort_values(by="Erros", ascending=False)
-            
-            def get_status(row):
-                verb_id = row["id"]
-                if verb_id in user_data["learning_pool_ids"]: return "Em Aprendizado"
-                if verb_id in user_data["learned_pool_ids"]: return "Aprendido"
-                return "Não Visto"
-
-            error_df["Status"] = error_df.apply(get_status, axis=1)
-            
-            st.dataframe(
-                error_df[["Verbo", "Tradução", "Erros", "Acertos Seguidos", "Status"]],
-                use_container_width=True,
-                hide_index=True
-            )
-        else:
-            st.info("Você ainda não errou nenhum verbo! 🎉")
-
-    with tab4:
-        st.subheader("Desempenho por Tipo de Pergunta")
-        st.caption("Qual é o seu ponto fraco? Preposição, Caso ou Significado?")
-        
-        stats = user_data["verb_stats"]
-        total_prep_errors = 0
-        total_trans_errors = 0
-        total_case_errors = 0
-        
-        for vid, data in stats.items():
-            total_prep_errors += data.get("preposition_errors", 0)
-            total_trans_errors += data.get("translation_errors", 0)
-            total_case_errors += data.get("case_errors", 0)
-            
-        total_errors = total_prep_errors + total_trans_errors + total_case_errors
-        
-        if total_errors == 0:
-            st.info("Você ainda não errou nenhuma pergunta! 🎉")
-        else:
-            # Calculate percentages
-            prep_percent = (total_prep_errors / total_errors) * 100
-            trans_percent = (total_trans_errors / total_errors) * 100
-            case_percent = (total_case_errors / total_errors) * 100
-            
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Erros de Preposição", f"{total_prep_errors}", f"{prep_percent:.1f}% do total")
-            col2.metric("Erros de Significado", f"{total_trans_errors}", f"{trans_percent:.1f}% do total")
-            col3.metric("Erros de Caso", f"{total_case_errors}", f"{case_percent:.1f}% do total")
-            
-            # Bar chart
-            chart_data = pd.DataFrame([
-                {"Tipo": "Preposição", "Total de Erros": total_prep_errors},
-                {"Tipo": "Significado", "Total de Erros": total_trans_errors},
-                {"Tipo": "Caso (Akk/Dat)", "Total de Erros": total_case_errors},
-            ])
-            
-            heineken_colors= {"dark_green": "#286529"} # Defined for the chart
-            
-            bar_chart = alt.Chart(chart_data).mark_bar(color=heineken_colors["dark_green"]).encode(
-                x=alt.X("Tipo:N", sort=None),
-                y=alt.Y("Total de Erros:Q"),
-                tooltip=["Tipo", "Total de Erros"]
-            ).properties(
-                title="Total de Erros por Tipo de Pergunta"
-            )
-            st.altair_chart(bar_chart, use_container_width=True)
+# --- --------------------------------- ---
+# --- FIM DA NOVA PÁGINA DE RELATÓRIO ---
+# --- --------------------------------- ---
 
 
 # --- Main App Logic ---
@@ -1318,7 +1361,7 @@ elif st.session_state.current_user:
     if st.session_state.page == "home":
         render_home_page()
     elif st.session_state.page == "report":
-        render_report_page()
+        render_report_page() # <-- CHAMA A NOVA FUNÇÃO
     elif st.session_state.page == "pre_quiz":
         render_pre_quiz_page()
     elif st.session_state.page == "quiz":
