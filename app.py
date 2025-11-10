@@ -1226,6 +1226,10 @@ def render_report_page():
             lambda row: (row["correct"] / row["total"] * 100) if row["total"] > 0 else 0, 
             axis=1
         )
+        # --- FIX: Adiciona as colunas 'correct' e 'wrong' que faltavam no DF ---
+        history_df['correct'] = history_df['correct'].astype(int)
+        history_df['wrong'] = history_df['wrong'].astype(int)
+        # --- END FIX ---
         
         base = alt.Chart(history_df).encode(
             x=alt.X('Sessão #:Q', axis=alt.Axis(title='Sessão'))
@@ -1233,10 +1237,17 @@ def render_report_page():
             title="Performance por Sessão"
         )
         
+        # --- FIX: Corrigido o tooltip para usar os nomes de coluna corretos ---
         line = base.mark_line(color=heineken_colors["dark_green"], point=True).encode(
             y=alt.Y('% Certo:Q', axis=alt.Axis(title='% Corretas'), scale=alt.Scale(domain=[0, 100])),
-            tooltip=['Sessão #', alt.Tooltip('% Certo', format='.0f'), 'Corretas', 'Erradas']
+            tooltip=[
+                alt.Tooltip('Sessão #'),
+                alt.Tooltip('% Certo', format='.0f', title='% Certo'),
+                alt.Tooltip('correct', title='Corretas'), # Era 'Corretas'
+                alt.Tooltip('wrong', title='Erradas')     # Era 'Erradas'
+            ]
         )
+        # --- END FIX ---
         
         st.altair_chart(line.interactive(), use_container_width=True)
         
