@@ -124,7 +124,7 @@ def from_json(data):
     if data:
         try:
             return json.loads(data)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, TypeError): # --- FIX: Adicionado TypeError aqui ---
             return []
     return []
 
@@ -1340,10 +1340,10 @@ def render_report_page():
                         names.append(f"{verb['verb']} {verb['preposition']}")
                 return " - ".join(names)
 
-            history_df["missed_verbs"] = history_df["missed_verbs"].apply(
-                lambda x: from_json(x) # Use from_json helper
-            )
+            # --- FIX: Esta é a linha que estava dando erro ---
+            # O 'missed_verbs' já é uma lista, não precisamos de from_json(x)
             history_df["Verbos Errados"] = history_df["missed_verbs"].apply(format_missed_verbs)
+            # --- END FIX ---
             
             st.dataframe(
                 history_df.rename(columns={
