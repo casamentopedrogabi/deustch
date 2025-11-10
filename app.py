@@ -22,15 +22,14 @@ REVIEW_VERBS_PER_SESSION = 3
 # --- Database Setup ---
 # Initialize Supabase connection. 
 # Ele vai ler as chaves do seu arquivo .streamlit/secrets.toml
-url = st.secrets["connections"]["supabase"]["url"]
-key = st.secrets["connections"]["supabase"]["key"]
-# O st.connection("supabase") NÃO funciona da mesma forma, 
-# então criamos o cliente manualmente. É mais confiável.
 try:
+    url = st.secrets["connections"]["supabase"]["url"]
+    key = st.secrets["connections"]["supabase"]["key"]
     supabase: Client = create_client(url, key)
 except Exception as e:
+    # Este erro só aparecerá se os secrets estiverem faltando
     st.error(f"Erro ao conectar ao Supabase: {e}")
-    st.error("Verifique suas chaves no .streamlit/secrets.toml")
+    st.error("Verifique suas chaves no .streamlit/secrets.toml (local) ou em 'Manage app' (nuvem).")
     st.stop()
 # --- END Database Setup ---
 
@@ -106,6 +105,22 @@ def get_verb_by_id(verb_id):
             return verb
     return None
 
+# --- Helper function to safely convert list to JSON string ---
+def to_json(data):
+    """Safely converts Python list to JSON string for DB."""
+    return json.dumps(data or [])
+
+# --- Helper function to safely load JSON string from DB ---
+def from_json(data):
+    """Safely loads JSON string from DB into Python list."""
+    if data:
+        try:
+            return json.loads(data)
+        except json.JSONDecodeError:
+            return []
+    return []
+
+
 def initialize_global_state():
     """Initializes session state variables that are not user-specific."""
     if "initialized" not in st.session_state:
@@ -179,9 +194,9 @@ def create_new_user_in_db(username, conn):
         # Insert into users table
         conn.table("users").insert({
             "username": username,
-            "unseen_verb_ids": json.dumps(unseen_verb_ids),
-            "learning_pool_ids": json.dumps(learning_pool_ids),
-            "learned_pool_ids": json.dumps([])
+            "unseen_verb_ids": to_json(unseen_verb_ids),
+            "learning_pool_ids": to_json(learning_pool_ids),
+            "learned_pool_ids": to_json([])
         }).execute()
         
         # Batch insert into verb_stats
@@ -221,9 +236,9 @@ def save_user_data():
     try:
         # 1. Update the 'users' table (the verb pools)
         conn.table("users").update({
-            "unseen_verb_ids": json.dumps(user_data["unseen_verb_ids"]),
-            "learning_pool_ids": json.dumps(user_data["learning_pool_ids"]),
-            "learned_pool_ids": json.dumps(user_data["learned_pool_ids"])
+            "unseen_verb_ids": to_json(user_data["unseen_verb_ids"]),
+            "learning_pool_ids": to_json(user_data["learning_pool_ids"]),
+            "learned_pool_ids": to_json(user_data["learned_pool_ids"])
         }).eq("username", username).execute()
         
         # 2. Update the 'verb_stats' table (UPSERT)
@@ -252,7 +267,7 @@ def save_user_data():
                 "correct": latest_entry["correct"],
                 "wrong": latest_entry["wrong"],
                 "total": latest_entry["total"],
-                "missed_verbs": json.dumps(latest_entry["missed_verbs"])
+                "missed_verbs": to_json(latest_entry["missed_verbs"])
             }
             
             conn.table("daily_stats_history").insert(entry_to_insert).execute()
@@ -547,19 +562,37 @@ def handle_answer(chosen_answer):
             
     user_data["show_answer"] = True
 
+# --- FIX: Added defensive check ---
 def next_question():
     """Moves the quiz to the next question index for the user."""
     user_data = get_user_data()
     if not user_data: return
         
     session = user_data["current_quiz_session"]
-    next_index = session["current_q_index"] + 1
+    
+    # --- FIX: Check if the session is already over ---
+    # This prevents a crash if the button is double-clicked
+    # or clicked after the quiz has ended.
+    if not session:
+        st.session_state.page = "results" # Ensure we are on results page
+        if 'rerun_requested' not in st.session_state:
+             st.session_state.rerun_requested = True
+             st.rerun()
+        return 
+    # --- END FIX ---
+
+    next_index = session["current_q_index"] + 1 
     
     if next_index < session["num_questions"]:
         session["current_q_index"] = next_index
         set_current_question(next_index)
     else:
         end_quiz_session()
+        # Rerun to go to results page
+        if 'rerun_requested' not in st.session_state:
+             st.session_state.rerun_requested = True
+             st.rerun()
+
 
 def end_quiz_session():
     """Finalizes the quiz, saves stats to user's history, and saves to disk."""
@@ -617,9 +650,9 @@ def login_user(username):
         
         # Now, load all user data into the cache
         user_data["username"] = user_row["username"]
-        user_data["unseen_verb_ids"] = json.loads(user_row["unseen_verb_ids"])
-        user_data["learning_pool_ids"] = json.loads(user_row["learning_pool_ids"])
-        user_data["learned_pool_ids"] = json.loads(user_row["learned_pool_ids"])
+        user_data["unseen_verb_ids"] = from_json(user_row["unseen_verb_ids"])
+        user_data["learning_pool_ids"] = from_json(user_row["learning_pool_ids"])
+        user_data["learned_pool_ids"] = from_json(user_row["learned_pool_ids"])
         
         # Load verb_stats
         stats_response = conn.table("verb_stats").select("*").eq("username", username).execute()
@@ -644,7 +677,7 @@ def login_user(username):
                 "correct": row["correct"], 
                 "wrong": row["wrong"], 
                 "total": row["total"],
-                "missed_verbs": json.loads(row["missed_verbs"])
+                "missed_verbs": from_json(row["missed_verbs"])
             })
         user_data["daily_stats_history"] = daily_stats_history
 
@@ -1171,7 +1204,7 @@ def render_report_page():
                 return " - ".join(names)
 
             history_df["missed_verbs"] = history_df["missed_verbs"].apply(
-                lambda x: x if isinstance(x, list) else []
+                lambda x: from_json(x) # Use from_json helper
             )
             history_df["Verbos Errados"] = history_df["missed_verbs"].apply(format_missed_verbs)
             
