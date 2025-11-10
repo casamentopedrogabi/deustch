@@ -1,0 +1,460 @@
+{
+    "unseen_verb_ids": [
+        "v6",
+        "v7",
+        "v8",
+        "v9",
+        "v10",
+        "v11",
+        "v12",
+        "v13",
+        "v14",
+        "v15",
+        "v16",
+        "v17",
+        "v18",
+        "v5",
+        "v23",
+        "v24",
+        "v25",
+        "v26",
+        "v27",
+        "v28",
+        "v29",
+        "v19",
+        "v20",
+        "v21",
+        "v22",
+        "v30",
+        "v31",
+        "v32",
+        "v33",
+        "v34",
+        "v35",
+        "v36",
+        "v37",
+        "v38",
+        "v39",
+        "v40",
+        "v41",
+        "v42",
+        "v43",
+        "v44",
+        "v45",
+        "v46",
+        "v47",
+        "v48",
+        "v49",
+        "v50",
+        "v51"
+    ],
+    "learning_pool_ids": [
+        "v1",
+        "v3",
+        "v4"
+    ],
+    "learned_pool_ids": [
+        "v2"
+    ],
+    "verb_stats": {
+        "v1": {
+            "streak": 2,
+            "errors": 6,
+            "preposition_errors": 3,
+            "translation_errors": 2,
+            "case_errors": 1
+        },
+        "v2": {
+            "streak": 0,
+            "errors": 2,
+            "preposition_errors": 0,
+            "translation_errors": 1,
+            "case_errors": 0
+        },
+        "v3": {
+            "streak": 0,
+            "errors": 6,
+            "preposition_errors": 1,
+            "translation_errors": 3,
+            "case_errors": 2
+        },
+        "v4": {
+            "streak": 0,
+            "errors": 3,
+            "preposition_errors": 1,
+            "translation_errors": 1,
+            "case_errors": 1
+        },
+        "v6": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v7": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v8": {
+            "streak": 0,
+            "errors": 2,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v9": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v10": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v11": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v12": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v13": {
+            "streak": 0,
+            "errors": 1,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v14": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v15": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v16": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v17": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v18": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v5": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v23": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v24": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v25": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v26": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v27": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v28": {
+            "streak": 1,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v29": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v19": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v20": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v21": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v22": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v30": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v31": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v32": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v33": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v34": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v35": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v36": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v37": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v38": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v39": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v40": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v41": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v42": {
+            "streak": 0,
+            "errors": 1,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v43": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v44": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v45": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v46": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v47": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v48": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v49": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v50": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        },
+        "v51": {
+            "streak": 0,
+            "errors": 0,
+            "preposition_errors": 0,
+            "translation_errors": 0,
+            "case_errors": 0
+        }
+    },
+    "daily_stats_history": [
+        {
+            "date": "2025-11-10",
+            "correct": 3,
+            "wrong": 6,
+            "total": 9,
+            "missed_verbs": [
+                "v3",
+                "v2",
+                "v1"
+            ]
+        },
+        {
+            "date": "2025-11-10",
+            "correct": 6,
+            "wrong": 6,
+            "total": 12,
+            "missed_verbs": [
+                "v42",
+                "v8",
+                "v3",
+                "v1"
+            ]
+        },
+        {
+            "date": "2025-11-10",
+            "correct": 3,
+            "wrong": 9,
+            "total": 12,
+            "missed_verbs": [
+                "v13",
+                "v4",
+                "v3",
+                "v2",
+                "v8",
+                "v1"
+            ]
+        }
+    ],
+    "current_quiz_session": null,
+    "current_question": null,
+    "show_answer": true
+}
